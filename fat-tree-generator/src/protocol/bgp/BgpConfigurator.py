@@ -80,7 +80,7 @@ class BgpConfigurator(IConfigurator):
         :return:
         """
         with open('%s/lab.conf' % lab.lab_dir_name, 'a') as lab_config:
-            lab_config.write('%s[image]="kathara/frr"\n' % node.name)
+            lab_config.write('%s[image]="kathara/frr-tscf2021"\n' % node.name)
 
         os.mkdir('%s/%s/etc/frr' % (lab.lab_dir_name, node.name))
         with open('%s/%s/etc/frr/daemons' % (lab.lab_dir_name, node.name), 'w') as daemons:

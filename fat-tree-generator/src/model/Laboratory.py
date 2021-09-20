@@ -58,9 +58,11 @@ class Laboratory(object):
                                                           str(interface.network.prefixlen)
                                                           )
                               )
-                startup.write('tcpdump -U -enni %s -w shared/%s/%s.pcap & echo $! >> shared/%s/tcpdump.pid\n' %
+                # TODO: lograr que tshark guarde la salida en disco, tiene pinta de ser un tema de permisos
+                startup.write('tshark -i %s -w shared/%s/%s.pcap & echo $! >> shared/%s/tshark.pid\n' %
                               (interface.get_name(), node.name, interface.get_name(), node.name))
-
+                startup.write('route > shared/%s/route.txt\n' %
+                              (node.name))
             if type(node) == Server:
                 startup.write('route add default gw %s\n' % str(node.interfaces[0].neighbours[0][1]))
                 startup.write('/etc/init.d/apache2 start\n')

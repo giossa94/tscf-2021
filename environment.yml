@@ -1,0 +1,9 @@
+name: tscf-2021
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.*
+  - pip=20.0
+  - pip:
+      - networkx==2.6.3

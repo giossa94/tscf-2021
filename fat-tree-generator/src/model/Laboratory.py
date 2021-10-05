@@ -58,7 +58,7 @@ class Laboratory(object):
                                                           str(interface.network.prefixlen)
                                                           )
                               )
-                # TODO: lograr que tshark guarde la salida en disco, tiene pinta de ser un tema de permisos
+                startup.write('touch shared/%s/%s.pcap\n' % (node.name, interface.get_name()))
                 startup.write('tshark -i %s -w shared/%s/%s.pcap & echo $! >> shared/%s/tshark.pid\n' %
                               (interface.get_name(), node.name, interface.get_name(), node.name))
                 startup.write('route > shared/%s/route.txt\n' %

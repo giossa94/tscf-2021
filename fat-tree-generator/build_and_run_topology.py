@@ -1,5 +1,4 @@
-import pathlib
-from src.utils import create_fat_tree, read_config
+from src.utils import create_fat_tree
 from topology_analysis import create_graph_from_json
 from build_forwarding_table import build_forwarding_table
 from table_diff import are_tables_equal
@@ -7,8 +6,13 @@ from utils import index_list_by_key
 import subprocess
 import os
 import json
+from build_config_json import build_config
+import sys
 
-params = read_config("config.json")
+
+print(f"Creating Fat Tree with K={sys.argv[1]}. The number of planes is 2 by default.")
+
+params = build_config(int(sys.argv[1]))
 
 default_directory_name = "fat_tree_%d_%d_%d+%d_%d_%d+%s" % (
     params["k_leaf"],

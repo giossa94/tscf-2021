@@ -3,12 +3,13 @@ import networkx as nx
 from topology_analysis import create_graph_from_json
 
 
-def get_next_hop(next_hop_id, neighbours):
-    for neighbour in neighbours:
-        [neighbour_id, _] = neighbour
-        if neighbour_id == next_hop_id:
-            return neighbour
-    return None
+def get_next_hop_ip(next_hop_id, node_interfaces):
+    for interface in node_interfaces:
+        for neighbour in interface["neighbours"]:
+            [neighbour_id, neighbour_ip] = neighbour
+            if neighbour_id == next_hop_id:
+                return neighbour_ip
+    raise RuntimeError("next_hop_id is not present in any of the node interfaces")
 
 
 def is_dc(subnetwork_dst, interfaces):
@@ -52,26 +53,33 @@ def build_forwarding_table(node_id, topology_graph, include_dc=False):
             continue  # discard DC subnetworks
 
         entry["dst"] = server_leaf_subnetwork["network"]
-        entry["nexthops"] = []
         shortest_paths = nx.all_shortest_paths(
             topology_graph, source=node_id, target=server
         )
         # Get next hops (second node of each path) and remove duplicates
-        next_hops = set([path[1] for path in list(shortest_paths)])
+        next_hops_ids = set([path[1] for path in list(shortest_paths)])
 
-        for next_hop in next_hops:
-            for interface in node_interfaces:
-                neighbour = get_next_hop(next_hop, interface["neighbours"])
+        next_hops_entries = []
+        for next_hop_id in next_hops_ids:
+            next_hop_ip = get_next_hop_ip(next_hop_id, node_interfaces)
+            next_hops_entries.append(
+                {
+                    "gateway": next_hop_ip,
+                    "dev": f"eth{interface['number']}",
+                }
+            )
 
-                if neighbour is not None:
-                    [_, neighbour_ip] = neighbour
+        if len(next_hops_entries) > 1:
+            entry["nexthops"] = next_hops_entries
+        elif len(next_hops_entries) == 1:
+            next_hop = next_hops_entries[0]
+            entry["gateway"] = next_hop["gateway"]
+            entry["dev"] = next_hop["dev"]
+        else:
+            raise RuntimeError(
+                f"No next hop to reach server {server} from node {node_id}"
+            )
 
-                    entry["nexthops"].append(
-                        {
-                            "gateway": neighbour_ip,
-                            "dev": f"eth{interface['number']}",
-                        }
-                    )
         forwarding_table.append(entry)
     return forwarding_table
 

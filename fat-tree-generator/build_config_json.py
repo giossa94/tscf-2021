@@ -1,5 +1,5 @@
 
-def build_config(k: int, planes: int = 2):
+def build_config(k: int = 4, planes: int = 2):
     if k % 2 != 0:
         raise Exception("Input error: k must be an even number!") 
     if (k/2) % planes != 0:
@@ -11,7 +11,7 @@ def build_config(k: int, planes: int = 2):
         "redundancy_factor": int((k/2)/planes),
         "n_pods": k,
         "servers_for_rack": 1,
-        "tof_rings": 'false',
+        "tof_rings": False,
         "leaf_spine_parallel_links": 1,
         "spine_tof_parallel_links": 1,
         "ring_parallel_links": 1,

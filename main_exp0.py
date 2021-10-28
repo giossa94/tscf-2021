@@ -1,24 +1,37 @@
-from src.utils import create_fat_tree
-from topology_analysis import create_graph_from_json
-from build_forwarding_table import build_forwarding_table
+from fat_tree_generator.src.utils import create_fat_tree
+from build_table import build_forwarding_table, create_graph_from_json
 from table_diff import are_tables_equal
-from utils import index_list_by_key
+from utils import index_list_by_key, build_config
 import subprocess
 import os
 import json
-from build_config_json import build_config
 import argparse
 
 # Build argument parser
-parser = argparse.ArgumentParser(description='Read topology configuration')
-parser.add_argument('-k', action='store', type=int, default=4, required= False, help = 'K that defines the Fat Tree.')
-parser.add_argument('-p', '-number_of_planes', action='store', type=int, default=2, required= False, help = 'Number of planes in the Fat Tree.')
+parser = argparse.ArgumentParser(description="Read topology configuration")
+parser.add_argument(
+    "-k",
+    action="store",
+    type=int,
+    default=4,
+    required=False,
+    help="K that defines the Fat Tree.",
+)
+parser.add_argument(
+    "-p",
+    "-number_of_planes",
+    action="store",
+    type=int,
+    default=2,
+    required=False,
+    help="Number of planes in the Fat Tree.",
+)
 args = parser.parse_args()
 
 print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
 
 # Build the config JSON that VFTGen uses fro creating the Fat Tree.
-params = build_config(args.k,args.p)
+params = build_config(args.k, args.p)
 
 # Check if the requested topology already exists.
 default_directory_name = "fat_tree_%d_%d_%d+%d_%d_%d+%s" % (
@@ -36,14 +49,14 @@ if os.path.exists(default_directory_name):
     output_dir = default_directory_name
     lab_dir = os.path.join(default_directory_name, "lab")
 else:
-    _, output_dir, lab_dir = create_fat_tree(
-        params, os.path.abspath(".")
-    )
+    _, output_dir, lab_dir = create_fat_tree(params, os.path.abspath("."))
 
 # Build a graph representing the desired Fat Tree.
-topology_graph = create_graph_from_json(output_dir)
+with open(os.path.join(output_dir, "lab.json")) as json_file:
+    lab_json = json.load(json_file)
+topology_graph = create_graph_from_json(lab_json)
 
-# Build the forwarding table for each node in the topology 
+# Build the forwarding table for each node in the topology
 # using Dijkstra's algorithm (ECMP version) on the built graph.
 node_tables = {}
 non_server_nodes = [
@@ -96,5 +109,5 @@ while len(converged_nodes_ids) < len(non_server_nodes):
 # The calculated forwarding tables match the ones in the emulation
 print("Topology has converged")
 
-#Stop emulation
+# Stop emulation
 subprocess.run(["kathara", "lclean"])

@@ -1,6 +1,5 @@
 import json
 import networkx as nx
-from topology_analysis import create_graph_from_json
 
 
 def get_next_hop_ip(next_hop_id, node_interfaces):
@@ -14,6 +13,32 @@ def get_next_hop_ip(next_hop_id, node_interfaces):
 
 def is_dc(subnetwork_dst, interfaces):
     return any(interface["network"] == subnetwork_dst for interface in interfaces)
+
+
+def create_graph_from_json(lab_json):
+
+    # https://networkx.org/documentation/stable/reference/classes/graph.html
+    G = nx.Graph()
+
+    # Get every node's name from lab.json and the name of their neighbours as well
+    for tof_node in lab_json["aggregation_layer"]:
+        interfaces = lab_json["aggregation_layer"][tof_node]["interfaces"]
+        G.add_node(tof_node, interfaces=interfaces)
+        for interface in interfaces:
+            if interface["collision_domain"] != "lo":
+                for neighbour in interface["neighbours"]:
+                    G.add_edge(tof_node, neighbour[0])
+
+    for pod in lab_json["pod"]:
+        for node in lab_json["pod"][pod]:
+            interfaces = lab_json["pod"][pod][node]["interfaces"]
+            G.add_node(node, interfaces=interfaces)
+            for interface in interfaces:
+                if interface["collision_domain"] != "lo":
+                    for neighbour in interface["neighbours"]:
+                        G.add_edge(node, neighbour[0])
+
+    return G
 
 
 def build_forwarding_table(node_id, topology_graph, include_dc=False):

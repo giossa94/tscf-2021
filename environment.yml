@@ -8,3 +8,5 @@ dependencies:
   - pip:
       - networkx==2.6.3
       - black
+      - pyshark==0.4.3
+      - nest-asyncio==1.5.1

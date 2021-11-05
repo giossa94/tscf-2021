@@ -1,13 +1,13 @@
 from fat_tree_generator.src.utils import create_fat_tree
-from build_table import get_nodes_and_interfaces_from_json
+from build_table import get_nodes_and_interfaces_from_json, build_forwarding_table, create_graph_from_json
 from table_diff import are_tables_equal
 from utils import index_list_by_key, build_config
-from sliding_window import sliding_window_check
+from sliding_window import sliding_window
 import subprocess, nest_asyncio, os, json, argparse, time
-from shutil import copyfile
 
-WINDOW_SIZE = 20
-THRESHOLD = 0.2
+WINDOW_SIZE = 30
+THRESHOLD = 0.1
+MAXIMUM_FAILED_ATTEMPTS = 5
 
 # Build argument parser
 parser = argparse.ArgumentParser(description="Read topology configuration")
@@ -33,7 +33,7 @@ parser.add_argument(
     "-clean_lab",
     action="store",
     type=bool,
-    default=True,
+    default=False,
     required=False,
     help="Run kathara lclean before starting emulation",
 )
@@ -62,11 +62,24 @@ if os.path.exists(default_directory_name):
 else:
     _, output_dir, lab_dir = create_fat_tree(params, os.path.abspath("."))
 
+
 # Get nodes and interfaces of the tokens
 with open(os.path.join(output_dir, "lab.json")) as json_file:
     lab_json = json.load(json_file)
 nodes_and_interfaces = get_nodes_and_interfaces_from_json(lab_json)
-non_server_nodes = [node_id for node_id in nodes_and_interfaces if not node_id.startswith("server")]
+
+# Create lists of nodes
+tof_nodes = [node_id for node_id in nodes_and_interfaces if node_id.startswith("tof")]
+spine_nodes = [node_id for node_id in nodes_and_interfaces if node_id.startswith("spine")]
+leaf_nodes = [node_id for node_id in nodes_and_interfaces if node_id.startswith("leaf")]
+
+# Set path for saving the calculated tables
+tables_dir = os.path.join(
+    os.getcwd(),
+    output_dir,
+    "tables",
+)
+os.makedirs(tables_dir, exist_ok=True)
 
 # Change to lab directory
 os.chdir(lab_dir)
@@ -78,36 +91,126 @@ if args.c:
 print("Running lab...")
 subprocess.run(["kathara", "lstart", "--noterminals"])
 
+# Create sliding window object
+sw = sliding_window(WINDOW_SIZE,THRESHOLD)
+nest_asyncio.apply()
+
+# Start a timer and create two node_ids dicts  
+sw_start = time.time()
+output_tables_by_node = {} 
+number_of_failed_attempts_by_node = {node_id: 0 for node_id in tof_nodes+spine_nodes+leaf_nodes}
+
+
+# Check leaf nodes convergence at first
+converged_leaves_ids = []
+node_index = 0
+while len(converged_leaves_ids) < len(leaf_nodes):
+    node_id = leaf_nodes[node_index % len(leaf_nodes)]
+    if node_id in converged_leaves_ids:
+        node_index += 1
+        continue
+
+    # If node_id did not converge, call the sliding window to check every .pcap file
+    pcap_paths = [os.path.join('shared',node_id, interface + '.pcap') for interface in nodes_and_interfaces[node_id]]
+    try:
+        result = sw.sliding_window_check(pcap_paths)
+        if result['code']==1 or number_of_failed_attempts_by_node[node_id]>= MAXIMUM_FAILED_ATTEMPTS:
+            if result['code']==1:
+                print(f"Node {node_id} converged (average={result['average']})")
+            else:
+                print(f"Node {node_id} has not yet converged but reached maximum attempts. Convergence is assumed.")
+                
+            # Add node_id to the list of converged leaf nodes
+            converged_leaves_ids.append(node_id) 
+
+            # Save the forwarding table of node_id 
+            output = subprocess.run(["kathara", "exec", node_id, "--", "ip", "-json", "route"],text=True,capture_output=True,)
+            actual_table = index_list_by_key(list=json.loads(output.stdout), key="dst")
+            with open(os.path.join(tables_dir, f"{node_id}_table.json"), mode="w") as file:
+                json.dump(actual_table, file, indent=4, sort_keys=True)
+            
+            # Save the ouput in memory for using it in the final check
+            output_tables_by_node[node_id] = output
+
+        else:
+            number_of_failed_attempts_by_node[node_id]+=1
+            print(f"Node {node_id} has not yet converged on its {number_of_failed_attempts_by_node[node_id]} failed attempt ({result['status']})")
+    except Exception as e:
+        print(f'Error: {e}')
+
+    node_index += 1
+
+
+non_server_or_leaf_nodes = tof_nodes + spine_nodes
 converged_nodes_ids = []
 node_index = 0
-nest_asyncio.apply()
-time.sleep(0.2)
 
-try:
-    # While the emulated topology doesn't converge, keep running
-    while len(converged_nodes_ids) < len(non_server_nodes):
-        node_id = non_server_nodes[node_index % len(non_server_nodes)]
-        if node_id in converged_nodes_ids:
-            node_index += 1
-            continue
-
-        # Call the sliding window to check every .pcap file of the current node_id
-        pcap_paths = [os.path.join('shared',node_id, interface + '.pcap') for interface in nodes_and_interfaces[node_id]]
-        converged, average = sliding_window_check(WINDOW_SIZE,THRESHOLD,pcap_paths)
-
-        if converged:
-            converged_nodes_ids.append(node_id) 
-            print(f"Node {node_id} converged (average={average})")
-        else:
-            print(f"Node {node_id} has not yet converged (average={average})")
-
+while len(converged_nodes_ids) < len(non_server_or_leaf_nodes):
+    node_id = non_server_or_leaf_nodes[node_index % len(non_server_or_leaf_nodes)]
+    if node_id in converged_nodes_ids:
         node_index += 1
-    
-    # Every node has converged according to the sliding window check
-    print(f"Topology has converged ({converged_nodes_ids})")
+        continue
 
-except Exception as e:
-    print('Error: ',e)
+    # If node_id did not converge, call the sliding window to check every .pcap file
+    pcap_paths = [os.path.join('shared',node_id, interface + '.pcap') for interface in nodes_and_interfaces[node_id]]
+    try:
+        result = sw.sliding_window_check(pcap_paths)
+        if result['code']==1 or number_of_failed_attempts_by_node[node_id]>= MAXIMUM_FAILED_ATTEMPTS:
+            if result['code']==1:
+                print(f"Node {node_id} converged (average={result['average']})")
+            else:
+                print(f"Node {node_id} has not yet converged but reached maximum attempts. Convergence is assumed.")
+            
+            # Add node_id to the list of converged leaf nodes
+            converged_nodes_ids.append(node_id) 
+            
+            # Save the forwarding table of node_id
+            output = subprocess.run(["kathara", "exec", node_id, "--", "ip", "-json", "route"],text=True,capture_output=True,)
+            actual_table = index_list_by_key(list=json.loads(output.stdout), key="dst")
+            with open(os.path.join(tables_dir, f"{node_id}_table.json"), mode="w") as file:
+                json.dump(actual_table, file, indent=4, sort_keys=True)
+            
+            # Save the ouput in memory for using it in the final check
+            output_tables_by_node[node_id] = output
+        else:
+            number_of_failed_attempts_by_node[node_id]+=1
+            print(f"Node {node_id} has not yet converged on its {number_of_failed_attempts_by_node[node_id]} failed attempt ({result['status']})")
+
+    except Exception as e:
+        print(f'Error: {e}')
+
+    node_index += 1
+
+# Every node has converged according to the sliding window check
+print(f"The topology has converged in {time.strftime('%M:%S', time.gmtime(time.time()-sw_start))} minutes.")
+
 
 # Stop emulation
 subprocess.run(["kathara", "lclean"])
+
+# Now we are going to check if the expected tables match the calculated tables
+# Build a graph representing the desired Fat Tree.
+os.chdir('..')
+with open("lab.json") as json_file:
+    lab_json = json.load(json_file)
+topology_graph = create_graph_from_json(lab_json)
+
+# Build the forwarding table for each node in the topology
+# using Dijkstra's algorithm (ECMP version) on the built graph.
+node_tables = {}
+non_server_nodes = leaf_nodes + non_server_or_leaf_nodes
+
+matching_tables = 0
+for node_id in non_server_nodes:
+    node_tables[node_id] = index_list_by_key(
+        list=build_forwarding_table(node_id, topology_graph, include_dc=True), key="dst"
+    )
+    output = output_tables_by_node[node_id]
+    actual_table = index_list_by_key(list=json.loads(output.stdout), key="dst")
+    if are_tables_equal(expected_table=node_tables[node_id], actual_table=actual_table, silent=True):
+        matching_tables+=1
+if matching_tables==len(non_server_nodes):
+    print("\n[OK] Tables also match.")
+else:
+    print('\n[Warning] The convergence criteria do not match.')
+

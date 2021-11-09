@@ -3,4 +3,7 @@ FROM kathara/frr
 RUN apt -y update; \
     apt -y upgrade; \
     DEBIAN_FRONTEND=noninteractive apt install -y apt-utils \
-    tshark
+    tshark python3-pip
+RUN python3 -m pip install python-daemon
+
+

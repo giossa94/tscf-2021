@@ -1,11 +1,12 @@
 from utils import index_list_by_key
 
 
-def are_tables_equal(expected_table, actual_table):
+def are_tables_equal(expected_table, actual_table, silent=False):
     for dst in expected_table:
         expected_entry = expected_table[dst]
         if dst not in actual_table:
-            print(dst + " not in actual_table")
+            if not silent:
+                print(dst + " not in actual_table")
             return False
         actual_entry = actual_table[dst]
         if "nexthops" in expected_entry and "nexthops" in actual_entry:
@@ -17,14 +18,16 @@ def are_tables_equal(expected_table, actual_table):
             )
             for next_hop_gateway in expected_next_hops:
                 if next_hop_gateway not in actual_next_hops:
-                    print(next_hop_gateway + " not in actual next hops")
+                    if not silent:
+                        print(next_hop_gateway + " not in actual next hops")
                     return False
         elif "gateway" in expected_entry and "gateway" in actual_entry:
             if expected_entry["gateway"] != actual_entry["gateway"]:
                 return False
         elif "prefsrc" in expected_entry and "prefsrc" in actual_entry:
             if expected_entry["prefsrc"] != actual_entry["prefsrc"]:
-                print("prefsrc")
+                if not silent:
+                    print("prefsrc")
                 return False
         elif "nexthops" in expected_entry and "gateway" in actual_entry:
             # The actual table has a single next hop but the expected one has more than one,

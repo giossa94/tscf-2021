@@ -9,3 +9,5 @@ dependencies:
       - networkx==2.6.3
       - black
       - python-daemon==2.3.0
+      - pyshark==0.4.3
+      - nest-asyncio==1.5.1

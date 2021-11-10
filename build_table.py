@@ -15,6 +15,16 @@ def is_dc(subnetwork_dst, interfaces):
     return any(interface["network"] == subnetwork_dst for interface in interfaces)
 
 
+def get_nodes_and_interfaces_from_json(lab_json):
+    nodes = {}
+    for tof_node in lab_json["aggregation_layer"]:
+        nodes[tof_node] = ['eth'+ str(i['number']) for i in lab_json["aggregation_layer"][tof_node]["interfaces"] if i["collision_domain"] != "lo"]
+    for pod in lab_json["pod"]:
+        for node in lab_json["pod"][pod]:
+            nodes[node] = ['eth'+ str(i['number']) for i in lab_json["pod"][pod][node]["interfaces"] if i["collision_domain"] != "lo"]
+
+    return nodes
+
 def create_graph_from_json(lab_json):
 
     # https://networkx.org/documentation/stable/reference/classes/graph.html
@@ -107,11 +117,3 @@ def build_forwarding_table(node_id, topology_graph, include_dc=False):
 
         forwarding_table.append(entry)
     return forwarding_table
-
-
-if __name__ == "__main__":
-    topology_graph = create_graph_from_json("fat_tree_2_2_1+1_1_1+bgp")
-    forwarding_table = build_forwarding_table(
-        "leaf_1_0_1", topology_graph, include_dc=True
-    )
-    print(json.dumps(forwarding_table, indent=4, sort_keys=True))

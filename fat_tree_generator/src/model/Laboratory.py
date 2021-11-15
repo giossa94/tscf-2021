@@ -39,6 +39,7 @@ class Laboratory(object):
 
             if type(node) != Server:
                 lab_config.write('%s[sysctl]="net.ipv4.fib_multipath_hash_policy=1"\n' % node.name)
+                lab_config.write('%s[bridged]="true"\n' % node.name)
 
     def write_startup(self, node):
         """
@@ -66,3 +67,5 @@ class Laboratory(object):
             if type(node) == Server:
                 startup.write('route add default gw %s\n' % str(node.interfaces[0].neighbours[0][1]))
                 startup.write('/etc/init.d/apache2 start\n')
+            else:
+                startup.write('python3 /shared/node_daemon_exp1.py %s\n' % node.name)

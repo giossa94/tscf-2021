@@ -5,8 +5,6 @@ from utils import index_list_by_key, build_config
 from sliding_window import sliding_window
 import subprocess, nest_asyncio, os, json, argparse, time
 
-WINDOW_SIZE = 30
-THRESHOLD = 0.1
 MAXIMUM_FAILED_ATTEMPTS = 5
 
 # Build argument parser
@@ -35,8 +33,27 @@ parser.add_argument(
     type=bool,
     default=False,
     required=False,
-    help="Run kathara lclean before starting emulation",
+    help="Run kathara lclean before starting emulation.",
 )
+parser.add_argument(
+    '-w',
+    "-window_size",
+    action="store",
+    type=int,
+    default=20,
+    required=False,
+    help="Number of packets considered in a window.",
+)
+parser.add_argument(
+    '-t',
+    "-threshold",
+    action="store",
+    type=float,
+    default=0.2,
+    required=False,
+    help="Threshold for the sliding window check.",
+)
+
 args = parser.parse_args()
 
 print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
@@ -92,14 +109,15 @@ print("Running lab...")
 subprocess.run(["kathara", "lstart", "--noterminals"])
 
 # Create sliding window object
-sw = sliding_window(WINDOW_SIZE,THRESHOLD)
+sw = sliding_window(args.w,args.t)
 nest_asyncio.apply()
 
+print(f"Starting sliding window check\n\t- k={args.k}\n\t- planes={args.p}\n\t- window_size={args.w}\n\t- threshold={args.t}\n\t- A node's convergence is assumed after {MAXIMUM_FAILED_ATTEMPTS} checks")
 # Start a timer and create two node_ids dicts  
 sw_start = time.time()
 output_tables_by_node = {} 
 number_of_failed_attempts_by_node = {node_id: 0 for node_id in tof_nodes+spine_nodes+leaf_nodes}
-
+number_of_tshark_errors = 0
 
 # Check leaf nodes convergence at first
 converged_leaves_ids = []
@@ -137,6 +155,7 @@ while len(converged_leaves_ids) < len(leaf_nodes):
             print(f"Node {node_id} has not yet converged on its {number_of_failed_attempts_by_node[node_id]} failed attempt ({result['status']})")
     except Exception as e:
         print(f'Error: {e}')
+        number_of_tshark_errors+=1
 
     node_index += 1
 
@@ -178,11 +197,14 @@ while len(converged_nodes_ids) < len(non_server_or_leaf_nodes):
 
     except Exception as e:
         print(f'Error: {e}')
+        number_of_tshark_errors+=1
 
     node_index += 1
 
 # Every node has converged according to the sliding window check
 print(f"The topology has converged in {time.strftime('%M:%S', time.gmtime(time.time()-sw_start))} minutes.")
+if number_of_tshark_errors>0:
+    print(f'{number_of_tshark_errors} tshark errors were found.')
 
 
 # Stop emulation

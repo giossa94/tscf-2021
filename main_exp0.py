@@ -5,28 +5,14 @@ from utils import index_list_by_key, build_config
 import subprocess
 import os
 import json
-import argparse
+from argument_parser import get_argument_parser
 
 # Build argument parser
-parser = argparse.ArgumentParser(description="Read topology configuration")
-parser.add_argument(
-    "-k",
-    action="store",
-    type=int,
-    default=4,
-    required=False,
-    help="K that defines the Fat Tree.",
-)
-parser.add_argument(
-    "-p",
-    "-number_of_planes",
-    action="store",
-    type=int,
-    default=2,
-    required=False,
-    help="Number of planes in the Fat Tree.",
-)
+parser = get_argument_parser()
 args = parser.parse_args()
+
+if args.p is None:
+    args.p = int(args.k / 2)
 
 print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
 

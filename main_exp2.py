@@ -1,3 +1,4 @@
+from argument_parser import get_argument_parser
 from fat_tree_generator.src.utils import create_fat_tree
 from build_table import get_nodes_and_interfaces_from_json, build_forwarding_table, create_graph_from_json
 from table_diff import are_tables_equal
@@ -8,53 +9,11 @@ import subprocess, nest_asyncio, os, json, argparse, time
 MAXIMUM_FAILED_ATTEMPTS = 5
 
 # Build argument parser
-parser = argparse.ArgumentParser(description="Read topology configuration")
-parser.add_argument(
-    "-k",
-    action="store",
-    type=int,
-    default=4,
-    required=False,
-    help="K that defines the Fat Tree.",
-)
-parser.add_argument(
-    "-p",
-    "-number_of_planes",
-    action="store",
-    type=int,
-    default=2,
-    required=False,
-    help="Number of planes in the Fat Tree.",
-)
-parser.add_argument(
-    '-c',
-    "-clean_lab",
-    action="store",
-    type=bool,
-    default=False,
-    required=False,
-    help="Run kathara lclean before starting emulation.",
-)
-parser.add_argument(
-    '-w',
-    "-window_size",
-    action="store",
-    type=int,
-    default=20,
-    required=False,
-    help="Number of packets considered in a window.",
-)
-parser.add_argument(
-    '-t',
-    "-threshold",
-    action="store",
-    type=float,
-    default=0.2,
-    required=False,
-    help="Threshold for the sliding window check.",
-)
-
+parser = get_argument_parser()
 args = parser.parse_args()
+
+if args.p is None:
+    args.p = int(args.k / 2)
 
 print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
 
@@ -152,7 +111,7 @@ while len(converged_leaves_ids) < len(leaf_nodes):
 
         else:
             number_of_failed_attempts_by_node[node_id]+=1
-            print(f"Node {node_id} has not yet converged on its {number_of_failed_attempts_by_node[node_id]} failed attempt ({result['status']})")
+            print(f"Node {node_id} has not yet converged on its {number_of_failed_attempts_by_node[node_id]} failed attempt (code: {result['code']}, {result['status']})")
     except Exception as e:
         print(f'Error: {e}')
         number_of_tshark_errors+=1

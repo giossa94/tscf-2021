@@ -26,9 +26,11 @@ class sliding_window:
                 cap = pyshark.FileCapture(path)
                 cap.close()
             except Exception as e:
-                raise Exception(f"Pyshark error: {e}") 
+                raise Exception("Pyshark error: " + str(e)) 
+
 
             number_of_packets_pcaps[path] = len([p for p in cap])
+
             if number_of_packets_pcaps[path]-self.window_size < 0:
                 return {'average': -1, 'status': "Not enough packets to consider the first window.", 'code': 2}
 

@@ -67,5 +67,4 @@ class Laboratory(object):
             if type(node) == Server:
                 startup.write('route add default gw %s\n' % str(node.interfaces[0].neighbours[0][1]))
                 startup.write('/etc/init.d/apache2 start\n')
-            else:
-                startup.write('python3 /shared/node_daemon_exp1.py %s\n' % node.name)
+                

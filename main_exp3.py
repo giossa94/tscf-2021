@@ -1,7 +1,7 @@
 from argument_parser import get_argument_parser
 from fat_tree_generator.src.utils import create_fat_tree
-from build_table import build_forwarding_table, create_graph_from_json
-from utils import index_list_by_key, build_config
+from build_table import create_graph_from_json
+from utils import build_config
 import os
 import json
 import socket
@@ -13,6 +13,13 @@ from threading import Thread
 
 HOST = "0.0.0.0"
 PORT = 65432
+
+
+# TODO
+# [X] - Copy config params to shared folder
+# [X] - Install dependencies in container
+# [X] - Copy daemon and dependencies to shared folder
+# [] - Parametrizar IP del servidor TCP
 
 
 def accept_wrapper(sock):
@@ -85,28 +92,19 @@ topology_graph = create_graph_from_json(lab_json)
 non_server_nodes = set(
     [node_id for node_id in topology_graph.nodes() if not node_id.startswith("server")]
 )
-for node_id in non_server_nodes:
-    print(f"Building forwarding table for node {node_id}...")
-    expected_table = index_list_by_key(
-        list=build_forwarding_table(node_id, topology_graph, include_dc=True), key="dst"
-    )
-    with open(
-        os.path.join(lab_dir, "shared", node_id, "expected_table.json"), mode="w"
-    ) as f:
-        json.dump(expected_table, f, indent=4, sort_keys=True)
 
 # Copy daemon code and dependencies into shared directory.
-copy("./node_daemon_exp1.py", os.path.join(lab_dir, "shared"))
-copy("./table_diff.py", os.path.join(lab_dir, "shared"))
+copy("./node_daemon_exp3.py", os.path.join(lab_dir, "shared"))
+copy("./sliding_window.py", os.path.join(lab_dir, "shared"))
 copy("./utils.py", os.path.join(lab_dir, "shared"))
 
 os.chdir(lab_dir)
 
 for node in non_server_nodes:
     with (open(node + ".startup", "a+")) as startup:
-        line = "python3.7 /shared/node_daemon_exp1.py %s\n"
+        line = "python3.7 /shared/node_daemon_exp3.py %s %s %s\n"
         if line not in startup.readlines():
-            startup.write(line % node)
+            startup.write(line % (node, args.w, args.t))
 
 sel = selectors.DefaultSelector()
 

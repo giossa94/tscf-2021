@@ -6,7 +6,7 @@ from utils import index_list_by_key, build_config
 from sliding_window import sliding_window
 import subprocess, nest_asyncio, os, json, argparse, time
 
-MAXIMUM_FAILED_ATTEMPTS = 5
+MAXIMUM_FAILED_ATTEMPTS = 15
 
 # Build argument parser
 parser = get_argument_parser()
@@ -113,12 +113,12 @@ while len(converged_leaves_ids) < len(leaf_nodes):
             number_of_failed_attempts_by_node[node_id]+=1
             print(f"Node {node_id} has not yet converged on its {number_of_failed_attempts_by_node[node_id]} failed attempt (code: {result['code']}, {result['status']})")
     except Exception as e:
-        print(f'Error: {e}')
+        print(f'Error ({node_id}): {e}')
         number_of_tshark_errors+=1
 
     node_index += 1
 
-
+time.sleep(1)
 non_server_or_leaf_nodes = tof_nodes + spine_nodes
 converged_nodes_ids = []
 node_index = 0
@@ -155,7 +155,7 @@ while len(converged_nodes_ids) < len(non_server_or_leaf_nodes):
             print(f"Node {node_id} has not yet converged on its {number_of_failed_attempts_by_node[node_id]} failed attempt ({result['status']})")
 
     except Exception as e:
-        print(f'Error: {e}')
+        print(f'Error ({node_id}): {e}')
         number_of_tshark_errors+=1
 
     node_index += 1

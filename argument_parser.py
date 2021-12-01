@@ -24,7 +24,7 @@ def get_argument_parser():
         "-clean_lab",
         action="store",
         type=bool,
-        default=False,
+        default=True,
         required=False,
         help="Run kathara lclean before starting emulation.",
     )

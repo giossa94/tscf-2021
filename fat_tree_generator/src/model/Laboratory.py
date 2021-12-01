@@ -39,7 +39,7 @@ class Laboratory(object):
 
             if type(node) != Server:
                 lab_config.write('%s[sysctl]="net.ipv4.fib_multipath_hash_policy=1"\n' % node.name)
-                lab_config.write('%s[bridged]="true"\n' % node.name)
+                # lab_config.write('%s[bridged]="true"\n' % node.name)
 
     def write_startup(self, node):
         """

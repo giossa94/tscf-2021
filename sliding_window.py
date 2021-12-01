@@ -22,11 +22,8 @@ class sliding_window:
 
         packets_to_analyze = []
         for path in paths_to_pcaps:
-            try:
-                cap = pyshark.FileCapture(path)
-                cap.close()
-            except Exception as e:
-                raise Exception("Pyshark error: " + str(e)) 
+            cap = pyshark.FileCapture(path)
+            cap.close()
 
 
             number_of_packets_pcaps[path] = len([p for p in cap])
@@ -51,12 +48,13 @@ class sliding_window:
         for packet in packets_to_analyze:
             if 'BGP' in packet and packet.bgp.type=='2': 
                 number_of_UPDATES_msgs+=1
+        print(f'{paths_to_pcaps[0][7:-9]} - Updates: {number_of_UPDATES_msgs} - Packets: {len(packets_to_analyze)}')
 
         # Update last id for each pcap analyzed
         for path in paths_to_pcaps:
             self.last_id_pcap[path] = number_of_packets_pcaps[path]
 
-        average = number_of_UPDATES_msgs/(self.window_size*len(paths_to_pcaps))
+        average = number_of_UPDATES_msgs/len(packets_to_analyze)
         
         if average<self.threshold:
             result = {'average': average, 'status':'Converged.', 'code': 1}

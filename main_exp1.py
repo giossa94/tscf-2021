@@ -108,6 +108,12 @@ for node in non_server_nodes:
         if line not in startup.readlines():
             startup.write(line % node)
 
+with (open("lab.conf", "a+")) as labconf:
+    for node in non_server_nodes:
+        line = '%s[bridged]="true"\n'
+        if line not in labconf.readlines():
+            labconf.write(line % node)
+
 sel = selectors.DefaultSelector()
 
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -127,8 +127,9 @@ thread = Thread(target=run_topology)
 thread.start()
 
 converged_nodes_ids = set()
+has_converged = False
 try:
-    while True:
+    while not has_converged:
         events = sel.select(timeout=None)
         for key, mask in events:
             if key.data is None:
@@ -138,6 +139,7 @@ try:
                 if node_id:
                     converged_nodes_ids.add(node_id)
                     if converged_nodes_ids == non_server_nodes:
+                        has_converged = True
                         print("Topology has converged")
                         break
                     else:

@@ -145,7 +145,7 @@ try:
                     if converged_nodes_ids == non_server_nodes:
                         has_converged = True
                         print(
-                            f"The topology has converged in {time.strftime('%M:%S', time.gmtime(time.time()-sw_start))} minutes."
+                            f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-sw_start))} hours."
                         )
                         break
                     else:

@@ -161,7 +161,7 @@ while len(converged_nodes_ids) < len(non_server_or_leaf_nodes):
     node_index += 1
 
 # Every node has converged according to the sliding window check
-print(f"The topology has converged in {time.strftime('%M:%S', time.gmtime(time.time()-sw_start))} minutes.")
+print(f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-sw_start))} horus.")
 if number_of_tshark_errors>0:
     print(f'{number_of_tshark_errors} tshark errors were found.')
 

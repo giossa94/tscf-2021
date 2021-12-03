@@ -7,6 +7,7 @@ import json
 import socket
 import selectors
 import types
+import time
 from shutil import copy
 import subprocess
 from threading import Thread
@@ -125,6 +126,7 @@ sel.register(lsock, selectors.EVENT_READ, data=None)
 
 thread = Thread(target=run_topology)
 thread.start()
+time_start = time.time()
 
 converged_nodes_ids = set()
 has_converged = False
@@ -140,7 +142,7 @@ try:
                     converged_nodes_ids.add(node_id)
                     if converged_nodes_ids == non_server_nodes:
                         has_converged = True
-                        print("Topology has converged")
+                        print(f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-time_start))} hours.")
                         break
                     else:
                         print(

@@ -5,6 +5,7 @@ from utils import index_list_by_key, build_config
 import subprocess
 import os
 import json
+import time
 from argument_parser import get_argument_parser
 
 # Build argument parser
@@ -67,6 +68,7 @@ os.chdir(lab_dir)
 print("Running lab...")
 subprocess.run(["kathara", "lstart", "--noterminals"])
 
+time_start = time.time()
 converged_nodes_ids = []
 node_index = 0
 
@@ -93,7 +95,7 @@ while len(converged_nodes_ids) < len(non_server_nodes):
     node_index += 1
 
 # The calculated forwarding tables match the ones in the emulation
-print("Topology has converged")
+print(f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-time_start))} hours.")
 
 # Stop emulation
 subprocess.run(["kathara", "lclean"])

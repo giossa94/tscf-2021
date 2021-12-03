@@ -104,15 +104,15 @@ os.chdir(lab_dir)
 
 for node in non_server_nodes:
     with (open(node + ".startup", "a+")) as startup:
-        line = "python3.7 /shared/node_daemon_exp1.py %s\n"
+        line = "python3.7 /shared/node_daemon_exp1.py %s\n" % node
         if line not in startup.readlines():
-            startup.write(line % node)
+            startup.write(line)
 
 with (open("lab.conf", "a+")) as labconf:
     for node in non_server_nodes:
-        line = '%s[bridged]="true"\n'
+        line = '%s[bridged]="true"\n' % node
         if line not in labconf.readlines():
-            labconf.write(line % node)
+            labconf.write(line)
 
 sel = selectors.DefaultSelector()
 

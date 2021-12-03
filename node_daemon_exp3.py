@@ -86,4 +86,4 @@ def run(node_id, window_size, threshold):
 
 
 if __name__ == "__main__":
-    run(sys.argv[1], sys.argv[2], sys.argv[3])
+    run(sys.argv[1], int(sys.argv[2]), float(sys.argv[3]))

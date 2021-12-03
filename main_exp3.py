@@ -10,6 +10,7 @@ import types
 from shutil import copy
 import subprocess
 from threading import Thread
+import time
 
 HOST = "0.0.0.0"
 PORT = 65432
@@ -102,15 +103,19 @@ os.chdir(lab_dir)
 
 for node in non_server_nodes:
     with (open(node + ".startup", "a+")) as startup:
-        line = "python3.7 /shared/node_daemon_exp3.py %s %s %s\n"
+        line = "python3.7 /shared/node_daemon_exp3.py %s %s %s\n" % (
+            node,
+            args.w,
+            args.t,
+        )
         if line not in startup.readlines():
-            startup.write(line % (node, args.w, args.t))
+            startup.write(line)
 
 with (open("lab.conf", "a+")) as labconf:
     for node in non_server_nodes:
-        line = '%s[bridged]="true"\n'
+        line = '%s[bridged]="true"\n' % node
         if line not in labconf.readlines():
-            labconf.write(line % node)
+            labconf.write(line)
 
 sel = selectors.DefaultSelector()
 
@@ -125,8 +130,10 @@ thread = Thread(target=run_topology)
 thread.start()
 
 converged_nodes_ids = set()
+has_converged = False
+sw_start = time.time()
 try:
-    while True:
+    while not has_converged:
         events = sel.select(timeout=None)
         for key, mask in events:
             if key.data is None:
@@ -136,7 +143,10 @@ try:
                 if node_id:
                     converged_nodes_ids.add(node_id)
                     if converged_nodes_ids == non_server_nodes:
-                        print("Topology has converged")
+                        has_converged = True
+                        print(
+                            f"The topology has converged in {time.strftime('%M:%S', time.gmtime(time.time()-sw_start))} minutes."
+                        )
                         break
                     else:
                         print(

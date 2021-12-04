@@ -100,6 +100,9 @@ copy("./sliding_window.py", os.path.join(lab_dir, "shared"))
 copy("./utils.py", os.path.join(lab_dir, "shared"))
 
 os.chdir(lab_dir)
+if args.c:
+    print("Cleaning lab before starting emulation...")
+    subprocess.run(["kathara", "lclean"])
 
 for node in non_server_nodes:
     with (open(node + ".startup", "a+")) as startup:

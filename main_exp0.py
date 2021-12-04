@@ -82,6 +82,7 @@ while len(converged_nodes_ids) < len(non_server_nodes):
         text=True,
         capture_output=True,
     )
+    print(f"Parsing actual table for node {node_id}", output.stdout)
     actual_table = index_list_by_key(list=json.loads(output.stdout), key="dst")
     expected_table = node_tables[node_id]
 

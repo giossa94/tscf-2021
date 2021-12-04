@@ -102,6 +102,9 @@ copy("./table_diff.py", os.path.join(lab_dir, "shared"))
 copy("./utils.py", os.path.join(lab_dir, "shared"))
 
 os.chdir(lab_dir)
+if args.c:
+    print("Cleaning lab before starting emulation...")
+    subprocess.run(["kathara", "lclean"])
 
 for node in non_server_nodes:
     with (open(node + ".startup", "a+")) as startup:
@@ -142,7 +145,9 @@ try:
                     converged_nodes_ids.add(node_id)
                     if converged_nodes_ids == non_server_nodes:
                         has_converged = True
-                        print(f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-time_start))} hours.")
+                        print(
+                            f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-time_start))} hours."
+                        )
                         break
                     else:
                         print(

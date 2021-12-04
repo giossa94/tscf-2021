@@ -63,6 +63,9 @@ tables_dir = os.path.join(
 )
 os.makedirs(tables_dir, exist_ok=True)
 os.chdir(lab_dir)
+if args.c:
+    print("Cleaning lab before starting emulation...")
+    subprocess.run(["kathara", "lclean"])
 
 # Start the Fat Tree emulation with Kathara
 print("Running lab...")
@@ -96,7 +99,9 @@ while len(converged_nodes_ids) < len(non_server_nodes):
     node_index += 1
 
 # The calculated forwarding tables match the ones in the emulation
-print(f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-time_start))} hours.")
+print(
+    f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-time_start))} hours."
+)
 
 # Stop emulation
 subprocess.run(["kathara", "lclean"])

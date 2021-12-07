@@ -11,19 +11,6 @@ from utils import index_list_by_key
 HOST = "172.17.0.1"  # The server's hostname or IP address
 PORT = 65432  # The port used by the server
 
-
-# TODO:
-# [X] Research how to connect container to the host network
-# [X] Research how to run a python daemon in Linux
-# [X] Implement node daemon
-# [X] Set [bridged]="true" to all non-server containers
-# [X] Implement exp1 controller (create and run topoogy, run TCP server until convergence)
-# [X] Generate and write expected table on startup
-# [X] Setup python dev env in containers
-# [X] Deploy daemon to containers (automate if possible)
-# [X] Run daemon on startup
-
-
 def get_expected_table(node_id):
     with open(os.path.join("/shared", node_id, "expected_table.json"), "r") as f:
         expected_table = json.load(f)

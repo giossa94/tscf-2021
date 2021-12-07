@@ -16,14 +16,6 @@ import time
 HOST = "0.0.0.0"
 PORT = 65432
 
-
-# TODO
-# [X] - Copy config params to shared folder
-# [X] - Install dependencies in container
-# [X] - Copy daemon and dependencies to shared folder
-# [] - Parametrizar IP del servidor TCP
-
-
 def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
     print("accepted connection from", addr)
@@ -132,10 +124,10 @@ sel.register(lsock, selectors.EVENT_READ, data=None)
 
 thread = Thread(target=run_topology)
 thread.start()
+sw_start = time.time()
 
 converged_nodes_ids = set()
 has_converged = False
-sw_start = time.time()
 try:
     while not has_converged:
         events = sel.select(timeout=None)

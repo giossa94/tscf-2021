@@ -10,7 +10,7 @@ from sliding_window import sliding_window
 import glob
 import nest_asyncio
 
-MAXIMUM_FAILED_ATTEMPTS = 5
+MAXIMUM_FAILED_ATTEMPTS = 30
 
 HOST = "172.17.0.1"  # The server's hostname or IP address
 PORT = 65432  # The port used by the server

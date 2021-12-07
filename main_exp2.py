@@ -6,7 +6,7 @@ from utils import index_list_by_key, build_config
 from sliding_window import sliding_window
 import subprocess, nest_asyncio, os, json, argparse, time
 
-MAXIMUM_FAILED_ATTEMPTS = 15
+MAXIMUM_FAILED_ATTEMPTS = 30
 
 # Build argument parser
 parser = get_argument_parser()

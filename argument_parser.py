@@ -43,7 +43,7 @@ def get_argument_parser():
         "-threshold",
         action="store",
         type=float,
-        default=0.5,
+        default=0.2,
         required=False,
         help="Threshold for the sliding window check.",
     )

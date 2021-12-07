@@ -1,3 +1,4 @@
+from data_test import data_test
 from fat_tree_generator.src.utils import create_fat_tree
 from build_table import build_forwarding_table, create_graph_from_json
 from table_diff import are_tables_equal
@@ -75,33 +76,48 @@ time_start = time.time()
 converged_nodes_ids = []
 node_index = 0
 
-# While the emulated topology doesn't converge, keep running
-while len(converged_nodes_ids) < len(non_server_nodes):
-    node_id = non_server_nodes[node_index % len(non_server_nodes)]
-    if node_id in converged_nodes_ids:
-        continue
-    output = subprocess.run(
-        ["kathara", "exec", node_id, "--", "ip", "-json", "route"],
-        text=True,
-        capture_output=True,
+try:
+    # While the emulated topology doesn't converge, keep running
+    while len(converged_nodes_ids) < len(non_server_nodes):
+        node_id = non_server_nodes[node_index % len(non_server_nodes)]
+        if node_id in converged_nodes_ids:
+            continue
+        output = subprocess.run(
+            ["kathara", "exec", node_id, "--", "ip", "-json", "route"],
+            text=True,
+            capture_output=True,
+        )
+        print(f"Parsing actual table for node {node_id}", output.stdout)
+        actual_table = index_list_by_key(list=json.loads(output.stdout), key="dst")
+        expected_table = node_tables[node_id]
+
+        # Check which nodes have already converged
+        if are_tables_equal(expected_table=expected_table, actual_table=actual_table):
+            converged_nodes_ids.append(node_id)
+            print(f"Node {node_id} converged, writing table...")
+            with open(
+                os.path.join(tables_dir, f"{node_id}_table.json"), mode="w"
+            ) as file:
+                json.dump(actual_table, file, indent=4, sort_keys=True)
+
+        node_index += 1
+
+    # The calculated forwarding tables match the ones in the emulation
+    print(
+        f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-time_start))} hours according to the centralized table criteria."
     )
-    print(f"Parsing actual table for node {node_id}", output.stdout)
-    actual_table = index_list_by_key(list=json.loads(output.stdout), key="dst")
-    expected_table = node_tables[node_id]
 
-    # Check which nodes have already converged
-    if are_tables_equal(expected_table=expected_table, actual_table=actual_table):
-        converged_nodes_ids.append(node_id)
-        print(f"Node {node_id} converged, writing table...")
-        with open(os.path.join(tables_dir, f"{node_id}_table.json"), mode="w") as file:
-            json.dump(actual_table, file, indent=4, sort_keys=True)
+    (data_test_result, data_test_info) = data_test(topology_graph, args.d)
 
-    node_index += 1
+    if data_test_result:
+        print("The topology has converged according to the data test. ✅")
+    else:
+        print("The topology has not converged according to the data test. ❌")
+        if args.d:
+            print(data_test_info)
 
-# The calculated forwarding tables match the ones in the emulation
-print(
-    f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-time_start))} hours."
-)
-
-# Stop emulation
-subprocess.run(["kathara", "lclean"])
+except KeyboardInterrupt:
+    print("caught keyboard interrupt, exiting")
+finally:
+    # Stop emulation
+    subprocess.run(["kathara", "lclean"])

@@ -1,4 +1,5 @@
 from argument_parser import get_argument_parser
+from data_test import data_test
 from fat_tree_generator.src.utils import create_fat_tree
 from build_table import create_graph_from_json
 from utils import build_config
@@ -148,7 +149,7 @@ try:
                     if converged_nodes_ids == non_server_nodes:
                         has_converged = True
                         print(
-                            f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-sw_start))} hours."
+                            f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-sw_start))} hours according to the decentralized sliding window criteria."
                         )
                         break
                     else:
@@ -156,6 +157,15 @@ try:
                             "Topology has not converged, remaining nodes:",
                             non_server_nodes.difference(converged_nodes_ids),
                         )
+
+    (data_test_result, data_test_info) = data_test(topology_graph, args.d)
+
+    if data_test_result:
+        print("The topology has converged according to the data test. ✅")
+    else:
+        print("The topology has not converged according to the data test. ❌")
+        if args.d:
+            print(data_test_info)
 
 except KeyboardInterrupt:
     print("caught keyboard interrupt, exiting")

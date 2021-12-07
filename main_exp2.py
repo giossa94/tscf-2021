@@ -1,10 +1,11 @@
 from argument_parser import get_argument_parser
+from data_test import data_test
 from fat_tree_generator.src.utils import create_fat_tree
 from build_table import get_nodes_and_interfaces_from_json, build_forwarding_table, create_graph_from_json
 from table_diff import are_tables_equal
 from utils import index_list_by_key, build_config
 from sliding_window import sliding_window
-import subprocess, nest_asyncio, os, json, argparse, time
+import subprocess, nest_asyncio, os, json, time
 
 MAXIMUM_FAILED_ATTEMPTS = 15
 
@@ -77,7 +78,6 @@ sw_start = time.time()
 output_tables_by_node = {} 
 number_of_failed_attempts_by_node = {node_id: 0 for node_id in tof_nodes+spine_nodes+leaf_nodes}
 number_of_tshark_errors = 0
-
 # Check leaf nodes convergence at first
 converged_leaves_ids = []
 node_index = 0
@@ -161,7 +161,7 @@ while len(converged_nodes_ids) < len(non_server_or_leaf_nodes):
     node_index += 1
 
 # Every node has converged according to the sliding window check
-print(f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-sw_start))} horus.")
+print(f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(time.time()-sw_start))} hours according to the centralized sliding window criteria.")
 if number_of_tshark_errors>0:
     print(f'{number_of_tshark_errors} tshark errors were found.')
 
@@ -195,3 +195,11 @@ if matching_tables==len(non_server_nodes):
 else:
     print('\n[Warning] The convergence criteria do not match.')
 
+(data_test_result, data_test_info) = data_test(topology_graph, args.d)
+
+if data_test_result:
+    print("The topology has converged according to the data test. ✅")
+else:
+    print("The topology has not converged according to the data test. ❌")
+    if args.d:
+        print(data_test_info)

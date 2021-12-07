@@ -1,5 +1,6 @@
 import argparse
 
+
 def get_argument_parser():
     parser = argparse.ArgumentParser(description="Read topology configuration")
     parser.add_argument(
@@ -45,5 +46,14 @@ def get_argument_parser():
         default=0.5,
         required=False,
         help="Threshold for the sliding window check.",
+    )
+    parser.add_argument(
+        "-d",
+        "-debug",
+        action="store",
+        type=bool,
+        default=False,
+        required=False,
+        help="Flag to enable debug mode.",
     )
     return parser

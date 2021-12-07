@@ -165,16 +165,24 @@ print(f"The topology has converged in {time.strftime('%H:%M:%S', time.gmtime(tim
 if number_of_tshark_errors>0:
     print(f'{number_of_tshark_errors} tshark errors were found.')
 
+# Build a graph representing the desired Fat Tree.
+with open(os.path.join("..", "lab.json")) as json_file:
+    lab_json = json.load(json_file)
+topology_graph = create_graph_from_json(lab_json)
+
+(data_test_result, data_test_info) = data_test(topology_graph, args.d)
+
+if data_test_result:
+    print("The topology has converged according to the data test. ✅")
+else:
+    print("The topology has not converged according to the data test. ❌")
+    if args.d:
+        print(data_test_info)
 
 # Stop emulation
 subprocess.run(["kathara", "lclean"])
 
 # Now we are going to check if the expected tables match the calculated tables
-# Build a graph representing the desired Fat Tree.
-os.chdir('..')
-with open("lab.json") as json_file:
-    lab_json = json.load(json_file)
-topology_graph = create_graph_from_json(lab_json)
 
 # Build the forwarding table for each node in the topology
 # using Dijkstra's algorithm (ECMP version) on the built graph.
@@ -194,12 +202,3 @@ if matching_tables==len(non_server_nodes):
     print("\n[OK] Tables also match.")
 else:
     print('\n[Warning] The convergence criteria do not match.')
-
-(data_test_result, data_test_info) = data_test(topology_graph, args.d)
-
-if data_test_result:
-    print("The topology has converged according to the data test. ✅")
-else:
-    print("The topology has not converged according to the data test. ❌")
-    if args.d:
-        print(data_test_info)

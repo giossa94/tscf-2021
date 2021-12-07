@@ -92,7 +92,7 @@ try:
         expected_table = node_tables[node_id]
 
         # Check which nodes have already converged
-        if are_tables_equal(expected_table=expected_table, actual_table=actual_table):
+        if are_tables_equal(expected_table=expected_table, actual_table=actual_table, silent=not args.d):
             converged_nodes_ids.append(node_id)
             print(f"Node {node_id} converged, writing table...")
             with open(

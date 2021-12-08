@@ -158,14 +158,15 @@ try:
 
     sel.close()
 
-    (data_test_result, data_test_info) = data_test(topology_graph, args.d)
+    if args.ping:
+        (data_test_result, data_test_info) = data_test(topology_graph, args.d)
 
-    if data_test_result:
-        print("The topology has converged according to the data test. ✅")
-    else:
-        print("The topology has not converged according to the data test. ❌")
-        if args.d:
-            print(data_test_info)
+        if data_test_result:
+            print("The topology has converged according to the data test. ✅")
+        else:
+            print("The topology has not converged according to the data test. ❌")
+            if args.d:
+                print(data_test_info)
 
 except KeyboardInterrupt:
     print("caught keyboard interrupt, exiting")

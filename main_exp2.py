@@ -60,7 +60,7 @@ os.makedirs(tables_dir, exist_ok=True)
 
 # Change to lab directory
 os.chdir(lab_dir)
-if args.c: 
+if args.clean: 
     print('Cleaning lab before starting emulation...')
     subprocess.run(["kathara", "lclean"])
 
@@ -170,14 +170,15 @@ with open(os.path.join("..", "lab.json")) as json_file:
     lab_json = json.load(json_file)
 topology_graph = create_graph_from_json(lab_json)
 
-(data_test_result, data_test_info) = data_test(topology_graph, args.d)
+if args.ping:
+    (data_test_result, data_test_info) = data_test(topology_graph, args.d)
 
-if data_test_result:
-    print("The topology has converged according to the data test. ✅")
-else:
-    print("The topology has not converged according to the data test. ❌")
-    if args.d:
-        print(data_test_info)
+    if data_test_result:
+        print("The topology has converged according to the data test. ✅")
+    else:
+        print("The topology has not converged according to the data test. ❌")
+        if args.d:
+            print(data_test_info)
 
 # Stop emulation
 subprocess.run(["kathara", "lclean"])

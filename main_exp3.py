@@ -93,7 +93,7 @@ copy("./sliding_window.py", os.path.join(lab_dir, "shared"))
 copy("./utils.py", os.path.join(lab_dir, "shared"))
 
 os.chdir(lab_dir)
-if args.c:
+if args.clean:
     print("Cleaning lab before starting emulation...")
     subprocess.run(["kathara", "lclean"])
 
@@ -150,14 +150,15 @@ try:
                             non_server_nodes.difference(converged_nodes_ids),
                         )
 
-    (data_test_result, data_test_info) = data_test(topology_graph, args.d)
+    if args.ping:
+        (data_test_result, data_test_info) = data_test(topology_graph, args.d)
 
-    if data_test_result:
-        print("The topology has converged according to the data test. ✅")
-    else:
-        print("The topology has not converged according to the data test. ❌")
-        if args.d:
-            print(data_test_info)
+        if data_test_result:
+            print("The topology has converged according to the data test. ✅")
+        else:
+            print("The topology has not converged according to the data test. ❌")
+            if args.d:
+                print(data_test_info)
 
 except KeyboardInterrupt:
     print("caught keyboard interrupt, exiting")

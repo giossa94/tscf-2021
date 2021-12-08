@@ -21,15 +21,6 @@ def get_argument_parser():
         help="Number of planes in the Fat Tree.",
     )
     parser.add_argument(
-        "-c",
-        "-clean_lab",
-        action="store",
-        type=bool,
-        default=True,
-        required=False,
-        help="Run kathara lclean before starting emulation.",
-    )
-    parser.add_argument(
         "-w",
         "-window_size",
         action="store",
@@ -48,7 +39,25 @@ def get_argument_parser():
         help="Threshold for the sliding window check.",
     )
     parser.add_argument(
-        "-d",
+        "-clean",
+        "-clean_lab",
+        action="store",
+        type=bool,
+        default=True,
+        required=False,
+        help="Run kathara lclean before starting emulation.",
+    )
+    parser.add_argument(
+        "-ping",
+        "-data_check",
+        action="store",
+        type=bool,
+        default=False,
+        required=False,
+        help="Flag to enable data test.",
+    )
+    parser.add_argument(
+        "-debug",
         "-debug",
         action="store",
         type=bool,
@@ -56,4 +65,5 @@ def get_argument_parser():
         required=False,
         help="Flag to enable debug mode.",
     )
+    
     return parser

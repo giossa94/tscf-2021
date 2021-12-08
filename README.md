@@ -35,5 +35,5 @@ Los parámetros se usan al ejecutar cada experimento. Por ejemplo: ``python main
 - ``-w`` es el tamaño de ventana a usar. Es útil solo en experimentos de ventana deslizante. Por defecto es ``w=10``.
 - ``-t`` es el umbral a usar. Es útil solo en experimentos de ventana deslizante. Por defecto es ``t=0.5``.
 - ``-clean`` corre ``kathara lclean`` en el laboratorio previo a iniciar la emulación. Por defecto es ``clean=True``.
-- ``ping`` realiza el chequeo de pings entre servidores para comparar contra el resultado de la convergencia. Por defecto es ``ping=False``
-- ``debug`` imprime el detalle de los pings intercambiados para chequear el resultado de la convergencia. Por defecto es ``debug=False``
+- ``-ping`` realiza el chequeo de pings entre servidores para comparar contra el resultado de la convergencia. Por defecto es ``ping=False``
+- ``-debug`` imprime el detalle de los pings intercambiados para chequear el resultado de la convergencia. Por defecto es ``debug=False``

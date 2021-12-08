@@ -53,6 +53,8 @@ args = parser.parse_args()
 
 if args.p is None:
     args.p = int(args.k / 2)
+if args.debug == True and args.ping==False:
+    args.ping = True
 
 print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
 
@@ -151,13 +153,13 @@ try:
                         )
 
     if args.ping:
-        (data_test_result, data_test_info) = data_test(topology_graph, args.d)
+        (data_test_result, data_test_info) = data_test(topology_graph, args.debug)
 
         if data_test_result:
             print("The topology has converged according to the data test. ✅")
         else:
             print("The topology has not converged according to the data test. ❌")
-            if args.d:
+            if args.debug:
                 print(data_test_info)
 
 except KeyboardInterrupt:

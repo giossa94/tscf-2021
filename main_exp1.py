@@ -103,7 +103,7 @@ copy("./table_diff.py", os.path.join(lab_dir, "shared"))
 copy("./utils.py", os.path.join(lab_dir, "shared"))
 
 os.chdir(lab_dir)
-if args.c:
+if args.clean:
     print("Cleaning lab before starting emulation...")
     subprocess.run(["kathara", "lclean"])
 

@@ -64,7 +64,7 @@ tables_dir = os.path.join(
 )
 os.makedirs(tables_dir, exist_ok=True)
 os.chdir(lab_dir)
-if args.c:
+if args.clean:
     print("Cleaning lab before starting emulation...")
     subprocess.run(["kathara", "lclean"])
 

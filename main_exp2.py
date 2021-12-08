@@ -180,7 +180,8 @@ if args.ping:
     else:
         print("The topology has not converged according to the data test. ❌")
         if args.debug:
-            print(data_test_info)
+            error_pairs = [x for x in data_test_info.keys() if data_test_info[x]==False]
+            print(error_pairs)
 
 # Stop emulation
 subprocess.run(["kathara", "lclean"])

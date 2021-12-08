@@ -33,7 +33,7 @@ def data_test(topology_graph, debug=False):
                     "ping",
                     server_b_leaf_interface["ip_address"],
                     "-c",
-                    "2",
+                    "1",
                 ],
                 text=True,
                 capture_output=True,

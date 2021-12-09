@@ -1,8 +1,8 @@
 from argument_parser import get_argument_parser
 from data_test import data_test
-from fat_tree_generator.src.utils import create_fat_tree
 from build_table import build_forwarding_table, create_graph_from_json
-from utils import index_list_by_key, build_config
+from fat_tree import build_fat_tree, build_config
+from utils import index_list_by_key, update_node_config_file
 import os
 import json
 import socket
@@ -54,7 +54,7 @@ args = parser.parse_args()
 
 if args.p is None:
     args.p = int(args.k / 2)
-if args.debug == True and args.ping==False:
+if args.debug == True and args.ping == False:
     args.ping = True
 
 print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
@@ -62,23 +62,7 @@ print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
 # Build the config JSON that VFTGen uses fro creating the Fat Tree.
 params = build_config(args.k, args.p)
 
-# Check if the requested topology already exists.
-default_directory_name = "fat_tree_%d_%d_%d+%d_%d_%d+%s" % (
-    params["k_leaf"],
-    params["k_top"],
-    params["redundancy_factor"],
-    params["leaf_spine_parallel_links"],
-    params["spine_tof_parallel_links"],
-    params["ring_parallel_links"],
-    params["protocol"],
-)
-
-if os.path.exists(default_directory_name):
-    print("Topology already exists")
-    output_dir = default_directory_name
-    lab_dir = os.path.join(default_directory_name, "lab")
-else:
-    _, output_dir, lab_dir = create_fat_tree(params, os.path.abspath("."))
+output_dir, lab_dir = build_fat_tree(params, "exp1")
 
 # Build a graph representing the desired Fat Tree.
 with open(os.path.join(output_dir, "lab.json")) as json_file:
@@ -109,17 +93,12 @@ if args.clean:
     print("Cleaning lab before starting emulation...")
     subprocess.run(["kathara", "lclean"])
 
-for node in non_server_nodes:
-    with (open(node + ".startup", "a+")) as startup:
-        line = "python3.7 /shared/node_daemon_exp1.py %s\n" % node
-        if line not in startup.readlines():
-            startup.write(line)
-
-with (open("lab.conf", "a+")) as labconf:
-    for node in non_server_nodes:
-        line = '%s[bridged]="true"\n' % node
-        if line not in labconf.readlines():
-            labconf.write(line)
+update_node_config_file(
+    non_server_nodes,
+    "python3.7 /shared/node_daemon_exp1.py %s\n",
+    lambda node: f"{node}.startup",
+)
+update_node_config_file(non_server_nodes, '%s[bridged]="true"\n', lambda _: "lab.conf")
 
 sel = selectors.DefaultSelector()
 
@@ -168,7 +147,9 @@ try:
         else:
             print("The topology has not converged according to the data test. ❌")
             if args.debug:
-                error_pairs = [x for x in data_test_info.keys() if data_test_info[x]==False]
+                error_pairs = [
+                    x for x in data_test_info.keys() if data_test_info[x] == False
+                ]
                 print(error_pairs)
 
 except KeyboardInterrupt:

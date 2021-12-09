@@ -1,9 +1,9 @@
 from argument_parser import get_argument_parser
 from data_test import data_test
-from fat_tree_generator.src.utils import create_fat_tree
 from build_table import build_forwarding_table, create_graph_from_json
 from table_diff import are_tables_equal
-from utils import build_config, index_list_by_key
+from fat_tree import build_config, build_fat_tree
+from utils import index_list_by_key, update_node_config_file
 import os
 import json
 import socket
@@ -63,23 +63,9 @@ print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
 # Build the config JSON that VFTGen uses fro creating the Fat Tree.
 params = build_config(args.k, args.p)
 
-# Check if the requested topology already exists.
-default_directory_name = "fat_tree_%d_%d_%d+%d_%d_%d+%s" % (
-    params["k_leaf"],
-    params["k_top"],
-    params["redundancy_factor"],
-    params["leaf_spine_parallel_links"],
-    params["spine_tof_parallel_links"],
-    params["ring_parallel_links"],
-    params["protocol"],
+output_dir, lab_dir = build_fat_tree(
+    params, f"exp3-{args.w}-{args.t}".replace(".", "_")
 )
-
-if os.path.exists(default_directory_name):
-    print("Topology already exists")
-    output_dir = default_directory_name
-    lab_dir = os.path.join(default_directory_name, "lab")
-else:
-    _, output_dir, lab_dir = create_fat_tree(params, os.path.abspath("."))
 
 # Build a graph representing the desired Fat Tree.
 with open(os.path.join(output_dir, "lab.json")) as json_file:
@@ -101,21 +87,12 @@ if args.clean:
     print("Cleaning lab before starting emulation...")
     subprocess.run(["kathara", "lclean"])
 
-for node in non_server_nodes:
-    with (open(node + ".startup", "a+")) as startup:
-        line = "python3.7 /shared/node_daemon_exp3.py %s %s %s\n" % (
-            node,
-            args.w,
-            args.t,
-        )
-        if line not in startup.readlines():
-            startup.write(line)
-
-with (open("lab.conf", "a+")) as labconf:
-    for node in non_server_nodes:
-        line = '%s[bridged]="true"\n' % node
-        if line not in labconf.readlines():
-            labconf.write(line)
+update_node_config_file(
+    non_server_nodes,
+    f"python3.7 /shared/node_daemon_exp3.py %s {args.w} {args.t}\n",
+    lambda node: f"{node}.startup",
+)
+update_node_config_file(non_server_nodes, '%s[bridged]="true"\n', lambda _: "lab.conf")
 
 sel = selectors.DefaultSelector()
 

@@ -10,6 +10,10 @@ from utils import index_list_by_key
 
 HOST = "172.17.0.1"  # The server's hostname or IP address
 PORT = 65432  # The port used by the server
+POLLING_INTERVAL_SECONDS = (
+    3  # The number of seconds to wait before performing the check again
+)
+
 
 def get_expected_table(node_id):
     with open(os.path.join("/shared", node_id, "expected_table.json"), "r") as f:
@@ -41,7 +45,7 @@ def run(node_id):
             while not are_tables_equal(
                 expected_table=expected_table, actual_table=actual_table
             ):
-                sleep(3)
+                sleep(POLLING_INTERVAL_SECONDS)
                 actual_table = get_actual_table()
             log("Node converged, connecting to server...", node_id)
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

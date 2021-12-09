@@ -39,7 +39,6 @@ class Laboratory(object):
 
             if type(node) != Server:
                 lab_config.write('%s[sysctl]="net.ipv4.fib_multipath_hash_policy=1"\n' % node.name)
-                # lab_config.write('%s[bridged]="true"\n' % node.name)
 
     def write_startup(self, node):
         """
@@ -59,11 +58,11 @@ class Laboratory(object):
                                                           str(interface.network.prefixlen)
                                                           )
                               )
+                startup.write('rm -f shared/%s/log.txt\n' % node.name)
+                startup.write('rm -f shared/%s/%s.pcap\n' % (node.name, interface.get_name()))
                 startup.write('touch shared/%s/%s.pcap\n' % (node.name, interface.get_name()))
                 startup.write('tshark -i %s -w shared/%s/%s.pcap & echo $! >> shared/%s/tshark.pid\n' %
                               (interface.get_name(), node.name, interface.get_name(), node.name))
-                startup.write('route > shared/%s/route.txt\n' %
-                              (node.name))
             if type(node) == Server:
                 startup.write('route add default gw %s\n' % str(node.interfaces[0].neighbours[0][1]))
                 startup.write('/etc/init.d/apache2 start\n')

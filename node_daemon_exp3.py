@@ -5,15 +5,18 @@ import subprocess
 import os
 import json
 import sys
-from utils import index_list_by_key
 from sliding_window import sliding_window
 import glob
 import nest_asyncio
+from utils import index_list_by_key
 
 MAXIMUM_FAILED_ATTEMPTS = 30
 
 HOST = "172.17.0.1"  # The server's hostname or IP address
 PORT = 65432  # The port used by the server
+POLLING_INTERVAL_SECONDS = (
+    3  # The number of seconds to wait before performing the check again
+)
 
 
 def write_actual_table(node_id):
@@ -70,7 +73,7 @@ def run(node_id, window_size, threshold):
                             f"Node has not yet converged on its {number_of_failed_attempts} failed attempt ({result['status']})",
                             node_id,
                         )
-                        sleep(3)
+                        sleep(POLLING_INTERVAL_SECONDS)
                 except Exception as e:
                     log("Tshark error: " + str(e), node_id)
             log("Writing actual table into shared folder...", node_id)

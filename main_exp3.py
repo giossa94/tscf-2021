@@ -1,8 +1,9 @@
 from argument_parser import get_argument_parser
 from data_test import data_test
 from fat_tree_generator.src.utils import create_fat_tree
-from build_table import create_graph_from_json
-from utils import build_config
+from build_table import build_forwarding_table, create_graph_from_json
+from table_diff import are_tables_equal
+from utils import build_config, index_list_by_key
 import os
 import json
 import socket
@@ -15,6 +16,7 @@ import time
 
 HOST = "0.0.0.0"
 PORT = 65432
+
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
@@ -53,7 +55,7 @@ args = parser.parse_args()
 
 if args.p is None:
     args.p = int(args.k / 2)
-if args.debug == True and args.ping==False:
+if args.debug == True and args.ping == False:
     args.ping = True
 
 print(f"Creating Fat Tree with k={args.k} and {args.p} planes.")
@@ -160,8 +162,27 @@ try:
         else:
             print("The topology has not converged according to the data test. ❌")
             if args.debug:
-                error_pairs = [x for x in data_test_info.keys() if data_test_info[x]==False]
+                error_pairs = [
+                    x for x in data_test_info.keys() if data_test_info[x] == False
+                ]
                 print(error_pairs)
+
+    matching_tables = 0
+    for node_id in non_server_nodes:
+        expected_table = index_list_by_key(
+            list=build_forwarding_table(node_id, topology_graph, include_dc=True),
+            key="dst",
+        )
+        with open(
+            os.path.join(lab_dir, "shared", node_id, "actual_table.json"), "r"
+        ) as f:
+            actual_table = json.load(f)
+        if are_tables_equal(expected_table, actual_table, silent=True):
+            matching_tables += 1
+    if matching_tables == len(non_server_nodes):
+        print("\n[OK] Tables also match.")
+    else:
+        print("\n[Warning] The convergence criteria do not match.")
 
 except KeyboardInterrupt:
     print("caught keyboard interrupt, exiting")
